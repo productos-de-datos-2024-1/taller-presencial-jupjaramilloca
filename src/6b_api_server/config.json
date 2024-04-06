@@ -1,6 +1,6 @@
 {
     "logs_dir": "datalake/logs/",
-    "basic_web_app_log": "basic_web_app.log",
+    "api_server_log": "api_server.log",
     "models_dir": "datalake/models/",
     "house_prices_model": "house_prices_model.pkl"
 }

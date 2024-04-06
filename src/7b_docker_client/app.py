@@ -1,12 +1,12 @@
+
 """Web application to deploy the model"""
 
 import json
 import logging
 import os.path
-import pickle
 
-import pandas as pd
 import pkg_resources
+import requests
 from flask import Flask, render_template, request
 
 # -----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ with pkg_resources.resource_stream(__name__, CONFIG_FILE) as f:
     config = json.load(f)
 
 logging.basicConfig(
-    filename=os.path.join(config["logs_dir"], config["basic_web_app_log"]),
+    filename=os.path.join(config["logs_dir"], config["api_client_log"]),
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s",
 )
@@ -42,6 +42,10 @@ def index():
     """Main web page"""
 
     if request.method == "POST":
+
+        # ---------------------------------------------------------------------
+        # Get the user values
+        # ---------------------------------------------------------------------
 
         user_values = {}
 
@@ -67,15 +71,17 @@ def index():
         else:
             user_values["condition"] = 5
 
-        df = pd.DataFrame.from_dict(user_values, orient="index").T
-
+        logging.info("-" * 40)
         logging.info("User values: %s", user_values)
 
-        model_path = config["models_dir"] + config["house_prices_model"]
-        with open(model_path, "rb") as f:
-            loaded_model = pickle.load(f)
+        # ---------------------------------------------------------------------
+        # Get the prediction
+        # ---------------------------------------------------------------------
 
-        prediction = round(loaded_model.predict(df)[0], 2)
+        url = config["api_server_url"]
+        response = requests.post(url, json=user_values, timeout=5)
+        prediction = round(float(response.text), 2)
+
         logging.info("Prediction: %s", prediction)
 
     else:
@@ -86,8 +92,10 @@ def index():
 
 if __name__ == "__main__":
     logging.info("Starting the application")
-    app.run(debug=True)
-    logging.info("Starting the application")
+    app.run(debug=True, port=5000, host="0.0.0.0")
+    logging.info("Finishing the application")
+    
+    
     
     
     
